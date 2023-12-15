@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/wlsyne/logIt/constants"
 	"os"
 	"testing"
 )
@@ -13,7 +14,7 @@ func TestGetConfig(t *testing.T) {
 		assert.FailNow(t, "Error creating temporary config file", err)
 	}
 
-	//defer os.Remove(f.Name())
+	defer os.Remove(f.Name())
 
 	//	when configFile not exist, this function should return nil and error
 	_, err = GetConfig("notExist.json")
@@ -44,47 +45,48 @@ func TestGetConfig(t *testing.T) {
 
 }
 
-//func TestCheckConfig(t *testing.T) {
-//	//	title : string optional
-//	//	gitBaseUrl: string url required
-//	//	chatIds: when publish chatIds is required
-//	//	botWebhook: when publish botWebhook is required
-//	mockConfig := map[string]interface{}{
-//		"gitBaseUrl": "https://www.abc.com",
-//		"chatIds":    []int{123, 456},
-//		"botWebhook": "https://www.abc.com",
-//	}
-//
-//	//Check Title
-//	_, err := CheckConfig(mockConfig, Write)
-//	assert.NoErrorf(t, err, "Expected nil, got error %v", err)
-//
-//	//Check gitBaseUrl
-//	mockConfig["gitBaseUrl"] = "abc"
-//	_, err = CheckConfig(mockConfig, Write)
-//	assert.EqualError(t, err, "gitBaseUrl is not a valid url")
-//
-//	//Check chatIds
-//	mockConfig["gitBaseUrl"] = "https://www.abc.com"
-//	mockConfig["chatIds"] = []int{}
-//
-//	// when Write
-//	_, err = CheckConfig(mockConfig, Write)
-//	assert.NoErrorf(t, err, "Expected nil, got error %v", err)
-//
-//	//When Publish chatIds is required
-//	_, err = CheckConfig(mockConfig, Publish)
-//	assert.EqualError(t, err, "chatIds is required when publish")
-//
-//	//Check botWebhook
-//	mockConfig["chatIds"] = []int{123, 456}
-//	mockConfig["botWebhook"] = "abc"
-//
-//	//When Write
-//	_, err = CheckConfig(mockConfig, Write)
-//	assert.NoErrorf(t, err, "Expected nil, got error %v", err)
-//
-//	//	When Publish botWebhook is required
-//	_, err = CheckConfig(mockConfig, Publish)
-//	assert.EqualError(t, err, "botWebhook is required when publish")
-//}
+func TestValidator(t *testing.T) {
+	//	title : string optional
+	//	gitBaseUrl: string url required
+	//	chatIds: when publish chatIds is required
+	//	botWebhook: when publish botWebhook is required
+
+	mockConfig := Config{
+		GitBaseUrl: "https://www.abc.com",
+		ChatIds:    []int{123, 456},
+		BotWebhook: "https://www.abc.com",
+	}
+
+	//Check Title
+	err := Validator(mockConfig, constants.WriteMode)
+	assert.NoErrorf(t, err, "Expected nil, got error %v", err)
+
+	//Check gitBaseUrl
+	mockConfig.GitBaseUrl = "abc"
+	err = Validator(mockConfig, constants.WriteMode)
+	assert.EqualError(t, err, "GitBaseUrl is not a valid URL")
+
+	//Check chatIds
+	mockConfig.GitBaseUrl = "https://www.abc.com"
+	mockConfig.ChatIds = []int{}
+
+	// when Write
+	err = Validator(mockConfig, constants.WriteMode)
+	assert.NoErrorf(t, err, "Expected nil, got error %v", err)
+
+	//When Publish chatIds is required
+	err = Validator(mockConfig, constants.PublishMode)
+	assert.EqualError(t, err, "ChatIds is required when publish")
+
+	//Check botWebhook
+	mockConfig.ChatIds = []int{123, 456}
+	mockConfig.BotWebhook = "abc"
+
+	//When Write
+	err = Validator(mockConfig, constants.WriteMode)
+	assert.NoErrorf(t, err, "Expected nil, got error %v", err)
+
+	//	When Publish botWebhook is required
+	err = Validator(mockConfig, constants.PublishMode)
+	assert.EqualError(t, err, "BotWebhook is required when publish")
+}
