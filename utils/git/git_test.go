@@ -10,7 +10,7 @@ func TestGetGitUserName(t *testing.T) {
 	assert.IsType(t, "string", userName)
 }
 
-//func TestGetCommitList(t *testing.T) {
-//	commitList, _ := GetCommitList()
-//	assert.IsType(t, []CommitItem{}, commitList)
-//}
+func TestGetCommitList(t *testing.T) {
+	commitList, _ := GetCommitList()
+	assert.IsType(t, []CommitItem{}, commitList)
+}
