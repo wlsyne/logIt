@@ -2,6 +2,8 @@ package git
 
 import (
 	"errors"
+	"fmt"
+	"github.com/wlsyne/go-func/sliceFunc"
 	"os"
 	"os/exec"
 	"strings"
@@ -27,17 +29,8 @@ func GetGitUserName() (string, error) {
 	return string(out), nil
 }
 
-// TODO: migrate it to an new project
-func mapSliceFunc[Input, Output any](originalSlice []Input, f func(value Input, index int) Output) []Output {
-	result := make([]Output, len(originalSlice))
-	for index, value := range originalSlice {
-		result[index] = f(value, index)
-	}
-	return result
-}
-
 func GetCommitList() ([]CommitItem, error) {
-	//	get commitList by go-git
+	//	get commitList
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, errors.New("Error getting current working directory")
@@ -48,20 +41,17 @@ func GetCommitList() ([]CommitItem, error) {
 	if err != nil {
 		return nil, errors.New("Error getting git commit list, please check the current directory is a git repository")
 	}
+
 	commitList := strings.Split(string(out), "\n")
-	commitItems := mapSliceFunc(commitList, func(value string, index int) CommitItem {
+	commitItems := sliceFunc.MapSlice(commitList, func(value string, index int) CommitItem {
 		item := strings.Split(value, ",")
 		return CommitItem{
 			Hash:    item[0],
 			Content: item[1],
 		}
 	})
-	return []CommitItem{{
-		Hash:    "hash",
-		Content: "content",
-	}, {
-		Hash:    "hash",
-		Content: "1",
-	}}, nil
+
+	fmt.Println(commitItems)
+	return commitItems, nil
 
 }
