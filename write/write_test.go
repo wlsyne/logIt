@@ -1,45 +1,92 @@
 package write
 
 import (
-	"github.com/manifoldco/promptui"
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/wlsyne/logIt/utils/config"
+	"os"
 	"testing"
 )
 
-func TestGetWriteResult(t *testing.T) {
+func readlineBufUtil(params []string) string {
+	bufSize := 4096
+	var output string
 
-	// When users select cancel,
+	for _, param := range params {
+		len := bufSize - 1 - len(param)%bufSize
+		output += fmt.Sprintf("%s\n%s", param, string(make([]byte, len, len)))
+	}
 
-	//	When users select finish,
-
-	//	When users select other common options like: feat, fix etc.,
-
+	return output
 }
 
-func TestSelectPrompt(t *testing.T) {
-	// Define the prompt options
-	options := []string{"Option 1", "Option 2", "Option 3"}
-
-	// Define the prompt
-	prompt := promptui.Select{
-		Label: "Select an option",
-		Items: options,
+func TestWriteResult(t *testing.T) {
+	defer func() {
+		GetConfig = GetConfigOriginal
+	}()
+	mockConfig := config.Config{
+		Title:      "test",
+		GitBaseUrl: "https://www.example.com",
+		ChatIds:    []int{123, 456},
+		BotWebhook: "https://www.example.com/webhook",
+	}
+	//Create temp file
+	file, err := os.CreateTemp("", "test")
+	if err != nil {
+		t.Fatalf("Error creating temp file: %v", err)
 	}
 
-	// Simulate user input
-	prompt.Templates = &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "\U000027A4 {{ . | cyan }}",
-		Inactive: "  {{ . | white }}",
-		Selected: "\U00002705 {{ . | green }}",
-	}
-
-	// Run the prompt
-	_, result, err := prompt.Run()
-
-	// Verify the result
+	err := WriteResult(mockConfig, "synwu", file, []WriteItem{
+		{
+			Commit:  "commit1",
+			Type:    "✨ Feat",
+			Content: "test",
+		},
+	})
 	assert.NoError(t, err)
-	assert.Equal(t, "Option 1", result)
+	//	check File content
+	info, err := os.ReadFile(file.Name())
+	if err != nil {
+		t.Fatalf("Error reading file: %v", err)
+	}
+	assert.Equal(t, `# test
+ - ✨ Feat: test  [#commit1](https://www.example.com/commit1)
+ > Published by <@synwu>`, string(info))
+}
+
+func TestWritePrompt(t *testing.T) {
+	//Create pipe to simulate user input
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("Error creating pipe: %v", err)
+	}
+	oldStdin := os.Stdin
+	defer func() {
+		r.Close()
+		w.Close()
+		os.Stdin = oldStdin
+	}()
+	os.Stdin = r
+	// Mock for commitList
+	commitList := []string{"commit1", "commit2", "commit3"}
+
+	// Test for selecting common options and finish
+	input := readlineBufUtil([]string{"", "Test", "", "\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B"})
+	if _, err := w.WriteString(input); err != nil {
+		t.Fatalf("Error writing to pipe: %v", err)
+	}
+	result, err = WritePrompt(commitList)
+	assert.NoError(t, err)
+	assert.IsType(t, []WriteItem{}, result)
+
+	// Test for selecting cancel
+	input = readlineBufUtil([]string{"", "Test", "", "\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B"})
+	if _, err := w.WriteString(input); err != nil {
+		t.Fatalf("Error writing to pipe: %v", err)
+	}
+	result, err = WritePrompt(commitList)
+
+	assert.ErrorAs(t, err, UserCancelError)
 }
 
 // Do you know a library called promptui in go, if I use it to write a select prompt, how can I test it? I mean to give some mock options and simulate the user's actions like: user press down arrow, select the second option, press enter, etc.,

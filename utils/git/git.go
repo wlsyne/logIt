@@ -30,7 +30,7 @@ func GetGitUserName() (string, error) {
 }
 
 func GetCommitList() ([]CommitItem, error) {
-	//	get commitList
+	//	get commitList by git command
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, errors.New("Error getting current working directory")
@@ -42,6 +42,7 @@ func GetCommitList() ([]CommitItem, error) {
 		return nil, errors.New("Error getting git commit list, please check the current directory is a git repository")
 	}
 
+	//convert commitList to []CommitItem
 	commitList := strings.Split(string(out), "\n")
 	commitItems := sliceFunc.MapSlice(commitList, func(value string, index int) CommitItem {
 		item := strings.Split(value, ",")
