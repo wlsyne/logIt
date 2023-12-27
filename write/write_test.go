@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/wlsyne/logIt/utils/config"
+	"github.com/wlsyne/logIt/utils/git"
 	"os"
 	"testing"
 )
@@ -21,9 +22,7 @@ func readlineBufUtil(params []string) string {
 }
 
 func TestWriteResult(t *testing.T) {
-	defer func() {
-		GetConfig = GetConfigOriginal
-	}()
+	// Mock for config
 	mockConfig := config.Config{
 		Title:      "test",
 		GitBaseUrl: "https://www.example.com",
@@ -50,8 +49,8 @@ func TestWriteResult(t *testing.T) {
 		t.Fatalf("Error reading file: %v", err)
 	}
 	assert.Equal(t, `# test
- - ✨ Feat: test  [#commit1](https://www.example.com/commit1)
- > Published by <@synwu>`, string(info))
+- ✨ Feat: test  [#commit1](https://www.example.com/commit1)
+> Published by <@synwu>`, string(info))
 }
 
 func TestWritePrompt(t *testing.T) {
@@ -68,14 +67,27 @@ func TestWritePrompt(t *testing.T) {
 	}()
 	os.Stdin = r
 	// Mock for commitList
-	commitList := []string{"commit1", "commit2", "commit3"}
+	commitList := []git.CommitItem{
+		{
+			Hash:    "commit1",
+			Content: "test1",
+		},
+		{
+			Hash:    "commit2",
+			Content: "test2",
+		},
+		{
+			Hash:    "commit3",
+			Content: "test3",
+		},
+	}
 
 	// Test for selecting common options and finish
 	input := readlineBufUtil([]string{"", "Test", "", "\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B\u001B[B"})
 	if _, err := w.WriteString(input); err != nil {
 		t.Fatalf("Error writing to pipe: %v", err)
 	}
-	result, err = WritePrompt(commitList)
+	result, err := WritePrompt(commitList)
 	assert.NoError(t, err)
 	assert.IsType(t, []WriteItem{}, result)
 
@@ -86,7 +98,6 @@ func TestWritePrompt(t *testing.T) {
 	}
 	result, err = WritePrompt(commitList)
 
-	assert.ErrorAs(t, err, UserCancelError)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "user canceled")
 }
-
-// Do you know a library called promptui in go, if I use it to write a select prompt, how can I test it? I mean to give some mock options and simulate the user's actions like: user press down arrow, select the second option, press enter, etc.,
