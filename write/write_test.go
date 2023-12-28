@@ -35,22 +35,30 @@ func TestWriteResult(t *testing.T) {
 		t.Fatalf("Error creating temp file: %v", err)
 	}
 
-	err := WriteResult(mockConfig, "synwu", file, []WriteItem{
-		{
-			Commit:  "commit1",
-			Type:    "✨ Feat",
-			Content: "test",
-		},
-	})
-	assert.NoError(t, err)
+	err = WriteResult(
+		WriteResultParams{
+			Config: mockConfig,
+			Author: "synwu",
+			WriteItems: []WriteItem{
+				{
+					Commit:  "commit1",
+					Type:    "✨ Feat",
+					Content: "test",
+				},
+			},
+			FilePath: file.Name(),
+		})
+	if err != nil {
+		t.Fatalf("Error writing file: %v", err)
+	}
 	//	check File content
 	info, err := os.ReadFile(file.Name())
 	if err != nil {
 		t.Fatalf("Error reading file: %v", err)
 	}
-	assert.Equal(t, `# test
-- ✨ Feat: test  [#commit1](https://www.example.com/commit1)
-> Published by <@synwu>`, string(info))
+
+	fmt.Println(string(info))
+	assert.Equal(t, "# test\n- ✨ Feat: test  [#commit1](https://www.example.com/commit1)\n> Published by <@synwu>\n", string(info))
 }
 
 func TestWritePrompt(t *testing.T) {

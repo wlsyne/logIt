@@ -2,8 +2,10 @@ package write
 
 import (
 	"errors"
+	"fmt"
 	"github.com/manifoldco/promptui"
 	"github.com/wlsyne/go-func/sliceFunc"
+	"github.com/wlsyne/logIt/utils/config"
 	"github.com/wlsyne/logIt/utils/git"
 	"os"
 )
@@ -46,6 +48,45 @@ func convertCommitList(commitList []git.CommitItem) []string {
 		return value.Content
 	})
 	return results
+}
+
+type WriteResultParams struct {
+	Config     config.Config
+	Author     string
+	WriteItems []WriteItem
+	FilePath   string
+}
+
+func WriteResult(params WriteResultParams) error {
+	filePath, author, writeItems, packageConfig := params.FilePath, params.Author, params.WriteItems, params.Config
+
+	//Handle changelog title
+	content := "# " + packageConfig.Title + "\n"
+
+	//handle changelog content
+	for _, writeItem := range writeItems {
+		content += "- " + string(writeItem.Type) + ": " + writeItem.Content + "  " + "[#" + writeItem.Commit + "](" + packageConfig.GitBaseUrl + "/" + writeItem.Commit + ")\n"
+	}
+
+	//handle changelog footer
+	content += "> Published by <@" + author + ">" + "\n"
+
+	//Write to file
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
+	defer file.Close()
+
+	if err != nil && !errors.Is(err, os.ErrExist) {
+		return err
+	}
+	fmt.Println(content)
+	_, err = file.WriteString(content)
+	fmt.Println(err)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func WritePrompt(commitList []git.CommitItem) ([]WriteItem, error) {
