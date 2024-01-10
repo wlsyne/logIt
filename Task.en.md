@@ -31,13 +31,8 @@
 
 ### changelog example
 ```markdown
-# @a/b 1.2.2
+# a/b/c
 - ✨ Feat: log间距改为两行  [#8ab0e0e](https://a/b/c/commit/8ab0e0e)
 > Published by <@synwu>
 ```
 
-## User Story 3: Users are able to publish the recent changelog to the WeCom group
-- When user type `logIt publish` or `logIt p`, the tool will enter the publishing mode
-- The tool will pick the most recent changelog from the changelog file to publish
-- Then the tool will pick the chatIds and botWebhook from config file, if the user has not configured the chatIds and botWebhook, the program will remind the user to configure the chatIds and botWebhook and exit the publishing mode
-- Then the tool will publish the changelog to the WeCom group through the bot SDK of WeCom

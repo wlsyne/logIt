@@ -9,7 +9,7 @@ import (
 
 func TestGetConfig(t *testing.T) {
 
-	f, err := os.CreateTemp("", "logItConfig.json")
+	f, err := os.CreateTemp("", constants.ConfigFileName)
 	if err != nil {
 		assert.FailNow(t, "Error creating temporary config file", err)
 	}

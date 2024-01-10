@@ -1,6 +1,7 @@
 package constants
 
 const ConfigFileName = "LogItConfig.json"
+const ChangelogFileName = "CHANGELOG.md"
 
 type Mode int
 
